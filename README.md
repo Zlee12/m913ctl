@@ -7,20 +7,20 @@ lighting — without the Windows software.**
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![Platform: Linux](https://img.shields.io/badge/platform-Linux-informational.svg)
 
-Writes button mappings, macros, DPI levels, report rate and lighting into the
-**Redragon M913**'s onboard memory from Linux. Once written, the settings live
-in the mouse and work on any computer without software running.
+The M913 is a 16-button mouse whose buttons, macros, DPI and RGB can only be
+set from a Windows app. m913ctl does it from Linux instead. It writes your
+settings into the mouse's own memory, so they stick on any computer — no
+driver, no background process.
 
-- Command line, a terminal UI (`m913ctl tui`) and a GTK window
-  (`m913ctl gui`), all editing one config file.
-- A side button can also **type a command** into the focused window — stored
-  on the mouse as a macro, so it works on any desktop with nothing running.
-- Python 3.11+ standard library only for the core; no root.
-- Works through the cable and the 2.4 GHz dongle.
-- Only the fields in your config are touched; unchanged fields aren't
-  rewritten.
-- Before writing it backs up the mouse. After writing it reads every field
-  back to check.
+- One config file, three ways to edit it: the command line, a terminal UI
+  (`m913ctl tui`) and a GTK app (`m913ctl gui`).
+- Bind buttons to clicks, keys, combos, media keys, macros or DPI steps. A
+  side button can also type a shell command for you — that lives on the mouse
+  too, so it needs nothing running and works on any desktop.
+- Cable or 2.4 GHz dongle.
+- Safe by default: it backs up before writing, only changes the fields you
+  set, and reads everything back to confirm. `restore` undoes a bad write.
+- Pure-Python core, standard library only, no root.
 
 <p align="center">
   <img src="docs/screenshots/gui-buttons.png" width="49%" alt="GTK window: click a button on the drawing of the mouse">
