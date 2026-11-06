@@ -184,8 +184,6 @@ If m913ctl is useful to you, you can support its development here:
 
 <a href="https://buymeacoffee.com/zlee12"><img src="https://img.shields.io/badge/Buy%20me%20a%20coffee-FFDD00?style=flat&logo=buymeacoffee&logoColor=black"></a>
 
-It's entirely optional; the software is and stays free.
-
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE). Thanks to
