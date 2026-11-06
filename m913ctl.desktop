@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=M913 Mouse
+Comment=Buttons, macros, lighting and DPI of the Redragon M913
+Exec=m913ctl gui
+Icon=input-mouse
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=mouse;redragon;m913;macro;dpi;

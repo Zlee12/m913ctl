@@ -1,0 +1,3 @@
+# m913ctl: let the logged-in user talk to the Redragon M913 (and nothing else)
+# 25a7:fa07 = 2.4 GHz dongle, 25a7:fa08 = cable
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", ATTRS{idVendor}=="25a7", ATTRS{idProduct}=="fa07|fa08", TAG+="uaccess"

@@ -1,0 +1,55 @@
+# m913ctl example. Only what you list here is written; everything else on the
+# mouse stays as it is. Settings go to the profile that is active on the mouse.
+#   m913ctl check config.toml       validate, no mouse needed
+#   m913ctl apply -n config.toml    show what would change
+#   m913ctl apply config.toml       write (backs up first, verifies after)
+
+report_rate = 1000          # 125, 250, 500 or 1000
+
+[dpi]
+levels = [800, 1600, 3200]  # 1-5 levels; [1600, 800] sets X and Y separately
+colors = ["ff0000", "00ff00", "0000ff"]
+
+[led]
+mode = "breathing"          # off, static, breathing, rainbow
+color = "ff00ff"
+brightness = 6              # 1-10
+speed = 3                   # 1-10, breathing/rainbow only
+
+[buttons]
+# left, right, middle, fire, button_1 .. button_12 (the side keypad)
+left = "left"
+right = "right"
+middle = "middle"
+fire = "dpi_loop"
+button_1 = "back"
+button_2 = "forward"
+button_3 = "combo:ctrl+c"
+button_4 = "combo:ctrl+v"
+button_7 = "media:play_pause"
+button_8 = "macro:greeting"
+button_9 = "macro:spam_click"
+
+[commands]
+# A side button can also TYPE a command into the focused window (open a
+# terminal first). It is stored on the mouse as a macro that types the text
+# and presses Enter — nothing runs on the PC and it works on any desktop.
+# ~31 plain characters fit per button; `m913ctl presets` lists the presets.
+button_11 = "preset:clear"
+button_12 = "preset:system_update"      # types: sudo pacman -Syu  <Enter>
+
+[macros.greeting]
+repeat = 1                  # 1-253, "hold" (while held) or "until_key"
+delay = 15                  # default ms after each event (>= 3)
+events = [
+  "type Hello,",
+  "tap space",
+  "type world!",
+  "delay 100",
+  "tap enter",
+]
+
+[macros.spam_click]
+repeat = "hold"
+delay = 30
+events = ["tap mouse_left"]
