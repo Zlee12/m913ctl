@@ -7,6 +7,9 @@ lighting — without the Windows software.**
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![Platform: Linux](https://img.shields.io/badge/platform-Linux-informational.svg)
 
+> **Unofficial.** This is an independent project, not affiliated with,
+> authorised by or endorsed by Redragon. It ships no vendor code or files.
+
 The M913 is a 16-button mouse whose buttons, macros, DPI and RGB can only be
 set from a Windows app. m913ctl does it from Linux instead. It writes your
 settings into the mouse's own memory, so they stick on any computer — no
@@ -71,6 +74,41 @@ m913ctl actions | keys | presets | dpi-values
 ```
 
 Writes go to the profile currently selected with the button on the mouse.
+
+## Backup and restore
+
+Every `apply` saves a backup of the mouse's current state **before** it writes
+anything, as a timestamped JSON file under `~/.local/state/m913ctl/`:
+
+```
+~/.local/state/m913ctl/backup-20261106-130500.json
+```
+
+A backup is a full dump of the memory m913ctl manages — every button, key
+action, macro, DPI level, report rate and the lighting — exactly as the mouse
+held it at that moment. You can also make one by hand at any time:
+
+```sh
+m913ctl backup                   # -> ~/.local/state/m913ctl/backup-<time>.json
+m913ctl backup -o original.json  # ...or wherever you want it
+```
+
+To put a saved state back on the mouse:
+
+```sh
+m913ctl restore ~/.local/state/m913ctl/backup-20261106-130500.json
+m913ctl restore -n original.json   # dry run: show what would change first
+```
+
+`restore` writes the backup's fields, then reads them back to confirm — the
+same safe path as `apply`.
+
+**Keep your very first backup.** Before you change anything, run `m913ctl
+backup -o factory.json` and store it somewhere safe. That file is your mouse's
+original, out-of-the-box state; `m913ctl restore factory.json` returns the
+mouse to it whenever you want. (m913ctl can't reset the mouse to Redragon's
+defaults on its own — it can only restore a backup you made, so make that one
+early.)
 
 ## Config
 
