@@ -7,8 +7,17 @@ lighting — without the Windows software.**
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)
 ![Platform: Linux](https://img.shields.io/badge/platform-Linux-informational.svg)
 
-> **Unofficial.** This is an independent project, not affiliated with,
-> authorised by or endorsed by Redragon. It ships no vendor code or files.
+> [!IMPORTANT]
+> Unofficial project. It is **not affiliated with, authorised by or endorsed
+> by Redragon**, and is not supported by them in any way. It contains no
+> vendor code or files.
+
+> [!CAUTION]
+> This writes directly to your mouse's onboard memory. A bad or interrupted
+> write can misconfigure the mouse or, in the worst case, leave it unusable.
+> There is **no warranty, especially against damage to the hardware** — use it
+> at your own risk. Make a backup first (see [Backup and
+> restore](#backup-and-restore)) and keep it safe.
 
 The M913 is a 16-button mouse whose buttons, macros, DPI and RGB can only be
 set from a Windows app. m913ctl does it from Linux instead. It writes your
