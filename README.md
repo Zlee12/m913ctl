@@ -109,6 +109,9 @@ m913ctl restore ~/.local/state/m913ctl/backup-20261106-130500.json
 m913ctl restore -n original.json   # dry run: show what would change first
 ```
 
+The GTK app has a **Restore** button for the same thing, and saves a baseline
+backup automatically the first time it talks to the mouse.
+
 `restore` writes the backup's fields, then reads them back to confirm — the
 same safe path as `apply`.
 

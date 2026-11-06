@@ -15,7 +15,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_foreign("cairo")  # python-cairo, for drawing the mouse
 import cairo  # noqa: E402
-from gi.repository import Adw, Gdk, GLib, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
 from . import device as D  # noqa: E402
 from . import dpi as dpimod  # noqa: E402
@@ -400,6 +400,10 @@ class Window(Adw.ApplicationWindow):
         self.read_btn.set_tooltip_text("Load what the mouse holds now")
         self.read_btn.connect("clicked", lambda *_: self.read_mouse())
         header.pack_start(self.read_btn)
+        self.restore_btn = Gtk.Button(icon_name="edit-undo-symbolic")
+        self.restore_btn.set_tooltip_text("Restore the mouse from a backup")
+        self.restore_btn.connect("clicked", lambda *_: self.restore_dialog())
+        header.pack_start(self.restore_btn)
         self.apply_btn = Gtk.Button(label="Apply")
         self.apply_btn.add_css_class("suggested-action")
         self.apply_btn.set_tooltip_text("Save and write to the mouse")
@@ -433,6 +437,7 @@ class Window(Adw.ApplicationWindow):
         self.groups = {}
         self.connect("close-request", self.on_close)
         self.refresh()
+        GLib.idle_add(self.ensure_baseline_backup)
 
     # -- state --
     def detect(self):
@@ -465,6 +470,7 @@ class Window(Adw.ApplicationWindow):
             self.save_btn.set_sensitive(dirty and not err)
             self.apply_btn.set_sensitive(not err and not self.busy)
             self.read_btn.set_sensitive(not self.busy)
+            self.restore_btn.set_sensitive(not self.busy)
             if self.dev:
                 kind = "wired" if self.dev.get("pid") == P.PID_WIRED else "wireless"
                 dev = (f"{self.dev['node']} · {kind} · "
@@ -960,6 +966,116 @@ class Window(Adw.ApplicationWindow):
             return
         self.set_busy(True)
         worker(go, done)
+
+    # -- backup / restore --
+    def ensure_baseline_backup(self):
+        """On first run with a mouse and no backups yet, save one quietly as the
+        baseline — the closest thing to the mouse's original state."""
+        if self.dev is None or O.list_backups():
+            return False
+        dev, sensor = self.dev, self.sensor
+
+        def go():
+            with D.Mouse(dev["node"]) as m:
+                return O.make_backup(m, dev, sensor)
+
+        def done(path, err):
+            if err or not path:
+                return  # best-effort; a manual Read/Apply will back up anyway
+            self.toast("Saved a baseline backup of your mouse's current settings")
+        worker(go, done)
+        return False
+
+    def restore_dialog(self):
+        dlg = Adw.AlertDialog(
+            heading="Restore the mouse",
+            body="Write a saved backup back onto the mouse. The earliest backup "
+                 "is your baseline — the closest thing to its original state. "
+                 "(The mouse doesn't expose Redragon's factory defaults, so there "
+                 "is no true factory reset.)")
+        group = Adw.PreferencesGroup()
+        backups = O.list_backups()
+        if not backups:
+            group.add(Adw.ActionRow(title="No backups yet",
+                                    subtitle="One is saved automatically the first time "
+                                             "you read or apply."))
+        for i, b in enumerate(reversed(backups)):  # newest first
+            baseline = b is backups[0]
+            row = Adw.ActionRow(title="Baseline (first backup)" if baseline else b["when"],
+                                subtitle=b["name"] + ("  ·  closest to original" if baseline
+                                                      else ""))
+            btn = Gtk.Button(label="Restore", valign=Gtk.Align.CENTER)
+            btn.add_css_class("destructive-action" if baseline else "flat")
+            btn.connect("clicked", lambda _b, p=b["path"], n=b["name"]:
+                        (dlg.close(), self.confirm_restore(p, n)))
+            row.add_suffix(btn)
+            row.set_activatable_widget(btn)
+            group.add(row)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        box.append(group)
+        from_file = Gtk.Button(label="Restore from a file…")
+        from_file.add_css_class("flat")
+        from_file.connect("clicked", lambda *_: (dlg.close(), self.restore_from_file()))
+        box.append(from_file)
+        dlg.set_extra_child(box)
+        dlg.add_response("cancel", "Close")
+        dlg.present(self)
+
+    def restore_from_file(self):
+        dialog = Gtk.FileDialog(title="Choose a backup")
+        f = Gtk.FileFilter()
+        f.set_name("m913ctl backup (*.json)")
+        f.add_pattern("*.json")
+        store = Gio.ListStore.new(Gtk.FileFilter)
+        store.append(f)
+        dialog.set_filters(store)
+
+        def done(d, res):
+            try:
+                gf = d.open_finish(res)
+            except GLib.Error:
+                return
+            self.confirm_restore(gf.get_path(), gf.get_basename())
+        dialog.open(self, None, done)
+
+    def confirm_restore(self, path, name):
+        try:
+            regions = O.load_backup(path)
+        except O.OpsError as e:
+            self.toast(str(e), 8)
+            return
+        if not self.need_mouse():
+            return
+        dlg = Adw.AlertDialog(
+            heading="Restore this backup to the mouse?",
+            body=f"{name}\n\nThis overwrites the mouse's current buttons, macros, DPI "
+                 "and lighting with the saved state, then reads them back to confirm.")
+        dlg.add_response("cancel", "Cancel")
+        dlg.add_response("restore", "Restore")
+        dlg.set_response_appearance("restore", Adw.ResponseAppearance.DESTRUCTIVE)
+        dev = self.dev
+
+        def go():
+            with D.Mouse(dev["node"]) as m:
+                return O.restore(m, regions)
+
+        def done(res, err):
+            self.set_busy(False)
+            if err:
+                self.toast(str(err), 8)
+                return
+            changed, bad = res
+            if bad:
+                self.toast("Some blocks did not verify: "
+                           + ", ".join(w.label for w, _ in bad), 0)
+            elif changed:
+                self.toast(f"Restored {name} ({changed} block(s))")
+            else:
+                self.toast("The mouse already matches that backup")
+
+        dlg.connect("response", lambda _d, r: r == "restore" and (
+            self.set_busy(True), worker(go, done)))
+        dlg.present(self)
 
     def apply(self):
         err = check(self.raw, self.sensor)

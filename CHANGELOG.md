@@ -4,6 +4,13 @@ All notable changes to m913ctl are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project uses
 [semantic versioning](https://semver.org/).
 
+## 0.4.0
+
+- The GTK app now has a **Restore** button: roll the mouse back to any saved
+  backup in one click, with the earliest one marked as the baseline.
+- On first connect the app quietly saves a baseline backup of the mouse's
+  current settings, so there is always something to restore to.
+
 ## 0.3.0
 
 - Side-button commands are now stored entirely on the mouse as a typed macro

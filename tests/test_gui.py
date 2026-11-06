@@ -137,6 +137,24 @@ class Window(unittest.TestCase):
         self.assertEqual(bytes(self.hw.mem[0x5A:0x5C]), P.field(P.BRIGHTNESS[2]))
         self.assertTrue(list(Path(self.tmp.name, "m913ctl").glob("backup-*.json")))
 
+    def test_backup_restore_roundtrip(self):
+        import os
+        from m913ctl import ops as O
+        # start from a known mouse state, back it up, change it, restore it
+        self.hw.mem[0x54:0x56] = P.field(0, 255, 0)[:2]  # some LED bytes
+        with mock.patch.dict(os.environ, {"XDG_STATE_HOME": self.tmp.name}):
+            with gui.D.Mouse(self.w.dev["node"]) as m:
+                path = O.make_backup(m, self.w.dev, self.w.sensor)
+            self.assertTrue(os.path.exists(path))
+            baseline = bytes(self.hw.mem)
+            self.hw.mem[0x54] = 0x11  # mutate the mouse
+            regions = O.load_backup(path)
+            with gui.D.Mouse(self.w.dev["node"]) as m:
+                changed, bad = O.restore(m, regions)
+            self.assertFalse(bad)
+            self.assertEqual(bytes(self.hw.mem), baseline)
+            self.assertEqual(len(O.list_backups()), 1)
+
     def test_read_mouse(self):
         self.hw.mem[0x54:0x5E] = P.field(0, 0, 255) + P.field(1) + P.field(255) + P.field(3)
         self.w.saved = self.w.raw

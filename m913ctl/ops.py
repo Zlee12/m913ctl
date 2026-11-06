@@ -140,6 +140,36 @@ def save_backup(b, path=None):
     return path
 
 
+def list_backups():
+    """Saved backups, oldest first (so [0] is the baseline / earliest)."""
+    d = state_dir()
+    try:
+        names = [n for n in os.listdir(d) if n.startswith("backup-") and n.endswith(".json")]
+    except OSError:
+        return []
+    out = []
+    for n in sorted(names):
+        p = os.path.join(d, n)
+        try:
+            when = time.strftime("%Y-%m-%d %H:%M", time.localtime(os.path.getmtime(p)))
+        except OSError:
+            when = ""
+        out.append({"path": p, "name": n, "when": when})
+    return out
+
+
+def make_backup(m, dev, sensor, path=None):
+    """Read a full backup off the mouse and save it. Returns the file path."""
+    return save_backup(full_backup(m, dev, sensor), path)
+
+
+def restore(m, regions):
+    """Write a backup's regions back to the mouse. Returns (changed, failures)."""
+    todo = diff(m, restore_writes(regions))
+    bad = write_and_verify(m, [w for w, _ in todo]) if todo else []
+    return len(todo), bad
+
+
 def diff(m, writes):
     """Keep only the writes whose bytes differ from what the mouse holds."""
     todo = []

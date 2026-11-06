@@ -1,6 +1,6 @@
 # Build from a checkout of this repo:  makepkg -si
 pkgname=m913ctl
-pkgver=0.3.0
+pkgver=0.4.0
 pkgrel=1
 pkgdesc="Configure a Redragon M913 gaming mouse's onboard buttons, macros, DPI and lighting"
 arch=('any')
